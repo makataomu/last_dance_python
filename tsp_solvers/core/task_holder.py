@@ -24,62 +24,58 @@ class TSPInstance:
 
     @classmethod
     def from_file(cls, file_path, float_dist: bool = True):
-        """
-        Create a TSPInstance object from a TSPLIB-format file.
-
-        Parameters
-        ----------
-        file_path : str
-            The path to the TSP instance file.
-
-        Returns
-        -------
-        TSPInstance
-            A fully initialized TSP instance.
-        """
         name = None
         comment_lines = []
         dimension = None
         coords = []
-
         reading_coords = False
+
         with open(file_path, 'r') as f:
             for line in f:
                 line = line.strip()
                 if not line:
                     continue
-                
-                # Parse known keywords
-                if line.startswith("NAME:"):
-                    name = line.split("NAME:")[1].strip()
-                elif line.startswith("COMMENT"):
-                    # We can accumulate all comments
-                    comment_lines.append(line.split("COMMENT")[1].strip(': ').strip())
-                elif line.startswith("TYPE:"):
-                    # We might not strictly need to use this, but we can store if needed
-                    # type_ = line.split("TYPE:")[1].strip()
-                    pass
-                elif line.startswith("DIMENSION:"):
-                    dimension = int(line.split("DIMENSION:")[1].strip())
-                elif line.startswith("EDGE_WEIGHT_TYPE:"):
-                    # Typically: EDGE_WEIGHT_TYPE: EUC_2D
-                    # We'll assume EUC_2D for now
-                    pass
-                elif "NODE_COORD_SECTION" in line:
-                    # The next lines should be coordinates of each city
-                    reading_coords = True
-                    continue
-                elif reading_coords:
-                    # Parse coordinates: format is "<index> <x> <y>"
+
+                # If we're reading the NODE_COORD_SECTION
+                if reading_coords:
                     parts = line.split()
-                    if len(parts) >= 3:
-                        # Ignore the index since it's usually 1-based and we just store
+                    if len(parts) >= 3 and parts[0].isdigit():
                         x = float(parts[1])
                         y = float(parts[2])
                         coords.append((x, y))
                         if dimension and len(coords) == dimension:
-                            # We have read all coordinates
                             break
+                    continue
+
+                # Try to parse known lines by splitting on ':'
+                # This handles variations like "DIMENSION : 38"
+                if ':' in line:
+                    key_val = line.split(':', 1)
+                    key = key_val[0].strip().upper()
+                    value = key_val[1].strip()
+
+                    if key == "NAME":
+                        name = value
+                    elif key == "COMMENT":
+                        comment_lines.append(value)
+                    elif key == "DIMENSION":
+                        dimension = int(value)
+                    elif key == "TYPE":
+                        # We can store or ignore TYPE if we want
+                        pass
+                    elif key == "EDGE_WEIGHT_TYPE":
+                        # Typically EUC_2D
+                        pass
+                    elif "NODE_COORD_SECTION" in key:
+                        reading_coords = True
+                        continue
+                else:
+                    # Some lines might not have ':'
+                    # For example, the line with NODE_COORD_SECTION might appear alone
+                    # Try to detect NODE_COORD_SECTION here as well
+                    if "NODE_COORD_SECTION" in line.upper():
+                        reading_coords = True
+                        continue
 
         comment = "\n".join(comment_lines)
 

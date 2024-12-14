@@ -45,10 +45,13 @@ class SimulatedAnnealing:
         new_tour[i:j+1] = reversed(new_tour[i:j+1])
         return new_tour
 
-    def solve(self, instance, on_iteration_callback=None, callback_interval=1):
+    def solve(self, instance, on_iteration_callback=None, callback_interval=1, stagnation_threshold=500, current_solution=None):
         n = instance.dimension
-        current_solution = list(range(n))
-        random.shuffle(current_solution)
+
+        if not current_solution:
+            current_solution = list(range(n))
+            random.shuffle(current_solution)
+            
         current_distance = instance.total_distance(current_solution)
 
         best_solution = current_solution[:]
@@ -57,7 +60,6 @@ class SimulatedAnnealing:
         temp = self.initial_temp
         iteration = 0
         stagnation_count = 0
-        stagnation_threshold = 500  # You can make this a parameter if desired
 
         # Loop until we either reach the stopping_temp or have stagnated for too long
         while (temp > self.stopping_temp) and (stagnation_count < stagnation_threshold):
