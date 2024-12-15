@@ -51,7 +51,6 @@ class SimulatedAnnealing:
         if not current_solution:
             current_solution = list(range(n))
             random.shuffle(current_solution)
-            
         current_distance = instance.total_distance(current_solution)
 
         best_solution = current_solution[:]
@@ -93,7 +92,6 @@ class SimulatedAnnealing:
 
             temp *= self.cooling_rate
             iteration += 1
-        print("here")
 
         # Final callback after completion (optional)
         if on_iteration_callback:
