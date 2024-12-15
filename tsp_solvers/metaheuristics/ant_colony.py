@@ -1,19 +1,52 @@
-import random 
+import random
+from typing import Callable, List, Optional, Tuple
 
 class AntColony:
-    def __init__(self, 
-                 num_ants=50, 
-                 alpha=2.0, 
-                 beta=4.0, 
-                 Q=100.0, 
-                 evaporation=0.5, 
-                 max_iter=1000, 
-                 initial_pheromone_level=0.1, 
-                 stagnation_limit=50, 
-                 convergence_threshold=None, 
-                 optimal_cost=None, 
-                 verbose=False):
-        # Existing initialization
+    """
+    Класс для решения задачи коммивояжера (TSP) с использованием метода муравьиной колонии (ACO).
+
+    Args:
+        num_ants:
+            Количество муравьев в каждой итерации.
+        alpha:
+            Влияет на значимость феромонов при выборе пути. 
+            Чем выше значение, тем большее значение придается феромонам.
+        beta:
+            Влияет на значимость расстояния при выборе пути. 
+            Чем выше значение, тем большее значение придается близости городов.
+        Q:
+            Константа, используемая для определения количества феромонов, добавляемых на путь.
+        evaporation:
+            Коэффициент испарения феромонов. Значение должно быть между 0 и 1.
+        max_iter:
+            Максимальное количество итераций алгоритма.
+        initial_pheromone_level:
+            Начальный уровень феромонов на всех путях.
+        stagnation_limit:
+            Лимит итераций без улучшений, после которого феромоны сбрасываются.
+        convergence_threshold:
+            Порог, при котором алгоритм останавливается, если найденное решение 
+            близко к оптимальному. Задается в процентах от optimal_cost.
+        optimal_cost:
+            Ожидаемая оптимальная стоимость маршрута. Используется вместе с convergence_threshold.
+        verbose:
+            Если True, выводит дополнительную информацию для отладки.
+    """
+    def __init__(
+          self
+        , num_ants               : int = 50
+        , alpha                  : float = 2.0
+        , beta                   : float = 4.0
+        , Q                      : float = 100.0
+        , evaporation            : float = 0.5
+        , max_iter               : int = 1000
+        , initial_pheromone_level: float = 0.1
+        , stagnation_limit       : int = 50
+        , convergence_threshold  : Optional[float] = None
+        , optimal_cost           : Optional[float] = None
+        , verbose                : bool = False
+        ):
+        
         self.num_ants = num_ants
         self.alpha = alpha
         self.beta = beta
@@ -29,8 +62,17 @@ class AntColony:
         # Store pheromone data for visualization
         self.pheromones = None
 
-    def select_index(self, probabilities):
-        """Select a city based on the given probabilities."""
+    def select_index(self, probabilities: List[float]) -> int:
+        """
+        Выбирает следующий город на основе переданных вероятностей.
+
+        Args:
+            probabilities:
+                Список вероятностей для выбора следующего города.
+
+        Returns:
+            Индекс выбранного города.
+        """
         random_value = random.random()
         cumulative_probability = 0.0
         for i, prob in enumerate(probabilities):
@@ -39,9 +81,34 @@ class AntColony:
                 return i
         return len(probabilities) - 1
 
-    def solve(self, instance, on_iteration_callback=None, callback_interval=1):
+    def solve(
+          self
+        , instance
+        , on_iteration_callback: Optional[Callable[[int, List[int], float, List[List[float]]], None]] = None
+        , callback_interval: int = 1
+        ) -> Tuple[List[int], float]:
         """
-        Solve the TSP using Ant Colony Optimization.
+        Решает задачу коммивояжера (TSP) с использованием метода муравьиной колонии (ACO).
+
+        Args:
+            instance:
+                Объект задачи, который должен содержать атрибут dimension 
+                (количество городов) и методы distance(i, j) для получения расстояния 
+                между городами i и j, а также total_distance(path) для вычисления 
+                длины пути.
+            on_iteration_callback:
+                Функция, вызываемая после каждой итерации. Принимает аргументы:
+                - номер итерации,
+                - лучший найденный путь,
+                - длину лучшего пути,
+                - текущую матрицу феромонов.
+            callback_interval:
+                Частота вызова on_iteration_callback (в итерациях).
+
+        Returns:
+            Кортеж из двух элементов:
+            - лучший найденный путь (список индексов городов),
+            - длина лучшего пути.
         """
         num_cities = instance.dimension
         self.pheromones = [[self.initial_pheromone_level] * num_cities for _ in range(num_cities)]

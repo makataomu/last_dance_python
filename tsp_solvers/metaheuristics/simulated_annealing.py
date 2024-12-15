@@ -1,5 +1,5 @@
-import math
 import random
+from ..utils import exp_manual
 
 class SimulatedAnnealing:
     def __init__(self, 
@@ -77,7 +77,7 @@ class SimulatedAnnealing:
                 else:
                     diff = current_distance - new_distance
                     # Accept worse solution with a probability
-                    if random.random() < math.exp(diff / temp):
+                    if random.random() < exp_manual(diff / temp):
                         current_solution = new_solution
                         current_distance = new_distance
             
